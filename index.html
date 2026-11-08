@@ -20,8 +20,10 @@ button.sm{min-height:34px;padding:2px 8px;font-size:13px}button.g{background:var
 label{display:block;font-size:13px;font-weight:700}
 .hd{background:linear-gradient(#5a3a22,#3b2616);color:#fff4d6;border-radius:10px;padding:10px;border:3px solid var(--gold)}
 .hd .scene{display:flex;gap:10px;align-items:flex-end}
-.ban{height:clamp(150px,28vw,240px);border:3px solid var(--gold);border-radius:8px;overflow:hidden;background:#2b1b10;display:flex;justify-content:center}
-.av{width:100%;height:100%;object-fit:cover;object-position:center 25%;display:block}
+.ban{position:relative;border:3px solid var(--gold);border-radius:8px;overflow:hidden;background:#2b1b10;display:flex;justify-content:center}
+.ban .bg{position:absolute;inset:-20px;width:calc(100% + 40px);height:calc(100% + 40px);object-fit:cover;filter:blur(18px) brightness(.7)}
+.av{position:relative;display:block;width:100%;height:auto;max-height:420px;object-fit:contain}
+svg.av{width:auto;height:170px}
 .bub{min-width:0;background:var(--pa);color:var(--ink);padding:8px 10px;border-radius:10px;flex:1;font-size:14px;position:relative}
 .counter{height:14px;background:repeating-linear-gradient(90deg,#8a5a34 0 20px,#74482a 20px 22px);margin-top:6px;border-radius:3px}
 .board{background:var(--dk);color:var(--gold);text-align:center;border-radius:8px;border:4px solid var(--wood);padding:6px;font-size:34px}
@@ -137,7 +139,7 @@ function calHtml(){const [Y,M]=calM.split('-').map(Number),first=calM+'-01',off=
  return h+'</div>'}
 /* ---- 主畫面 ---- */
 function render(){const s=S(),t=today(),f=dayFood(t),ws=wkStart(t),wk=Math.round(weekTotal(ws)),[k0,k1]=kcalRange();
- const asrc=AVG||AV,av=asrc?`<img class="av" src="${asrc}" alt="${esc(s.npc)}" onerror="if(AVG){AVG='';render()}">`:npcSvg;
+ const asrc=AVG||AV,av=asrc?`<img class="bg" src="${asrc}" alt="" aria-hidden="true"><img class="av" src="${asrc}" alt="${esc(s.npc)}" onerror="if(AVG){AVG='';render()}">`:npcSvg;
  let h=`<div class="hd"><h1 style="margin:0 0 6px;font-size:22px">${esc(s.guild)}，公會</h1><div class="ban">${av}</div><div class="bub" style="margin-top:8px"><b class="px">${esc(s.npc)}</b><div id="bubTxt">${esc(greet())}</div><div class="small">本週 ${wk} METs-分鐘｜今天 豆魚蛋肉 ${f.p}・全穀 ${f.g}・蔬菜 ${f.v}・油脂 ${f.f} 份｜水 ${f.w}/${s.bt} 瓶</div></div><div class="counter"></div>
  <div class="row" style="margin-top:8px"><button onclick="wDlg()">${IC_DB} 記錄運動</button><button onclick="mDlg()">${IC_FK} 記錄這一餐</button><button onclick="water(1)">${icBottle('h1')} 喝水 +1 瓶</button></div><div class="small" id="syncHd" style="color:#e8d29b;margin-top:6px">${esc(syncSt)}</div></div>`;
  // 運動
@@ -226,7 +228,7 @@ async function loadRemoteAvatar(){const c=ghCfg();AVG='';if(!c.o||!c.r||S().avat
  render()}
 function avUp(el){const f=el.files[0];if(!f)return;if(f.size>20e6){toast('圖檔超過 20 MB，請先縮小再上傳');return}
  const rd=new FileReader();rd.onload=()=>{if(f.type==='image/gif'){pickAvatar(rd.result);return}
-  const im=new Image();im.onload=()=>{const c=document.createElement('canvas'),k=Math.min(1,600/Math.max(im.width,im.height));c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);pickAvatar(c.toDataURL(f.type==='image/png'?'image/png':'image/jpeg',.9))};im.onerror=()=>toast('無法讀取這個圖檔');im.src=rd.result};
+  const im=new Image();im.onload=()=>{const c=document.createElement('canvas'),k=Math.min(1,1200/Math.max(im.width,im.height));c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);pickAvatar(c.toDataURL(f.type==='image/png'?'image/png':'image/jpeg',.9))};im.onerror=()=>toast('無法讀取這個圖檔');im.src=rd.result};
  rd.readAsDataURL(f)}
 /* ---- 備份與同步 ---- */
 function expo(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(Object.assign({},D,{avatarData:AV}))],{type:'application/json'}));a.download='來都來了，公會_'+today()+'.json';a.click()}
