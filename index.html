@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>修行場與食堂</title>
+<title>來都來了，公會</title>
 <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{--wood:#7a4e2d;--dk:#3b2616;--pa:#f3e3bd;--pa2:#e8d29b;--gold:#e0a82e;--grn:#4f9a56;--ora:#e08a2e;--blue:#4a6fd0;--ink:#2a1a0e}
@@ -51,15 +51,14 @@ dialog::backdrop{background:#000a}
 <dialog id="dlg"></dialog>
 <script>
 const KEY='guildTrainingCanteen_v1';
-const URLDEF='https://script.google.com/macros/s/AKfycbxvb6_rKASK8PjWhFxqzGXvT4T9m-7UXcKhqCS8sj3mpSK1l8gX21v6owiP9FB4rEQfhQ/exec';
-const S0={guild:'來都來了',npc:'嘎哩貓蕊',persona:'溫柔幽默霸氣中性帥氣女生',look:'貓耳中性帥氣灰黑色短髮女生',me:'愛瞇謀低家',age:'',sex:'',h:'',w:'',rhr:'',vo2:'',mhr:'',p0:3,p1:6,g0:1.5,g1:4,v0:3,v1:5,f0:3,f1:7,k0:'',k1:'',cc:800,bt:5,wday:1,url:URLDEF,avatar:'',act:1.375,kp:75,kg:70,kv:25,kf:45};
+const S0={guild:'來都來了',npc:'嘎哩貓蕊',persona:'溫柔幽默霸氣中性帥氣女生',look:'貓耳中性帥氣灰黑色短髮女生',me:'愛瞇謀低家',age:'',sex:'',h:'',w:'',rhr:'',vo2:'',mhr:'',p0:3,p1:6,g0:1.5,g1:4,v0:3,v1:5,f0:3,f1:7,k0:'',k1:'',cc:800,bt:5,wday:1,url:'',avatar:'',act:1.375,kp:75,kg:70,kv:25,kf:45,gh_owner:'',gh_repo:'',gh_branch:'main',avatarExt:null,avatarV:0};
 const TYPES=[['高強度間歇／循環訓練',8.0],['跑步（約 8 km/h）',8.3],['跑步（約 10 km/h）',9.8],['跑步機坡走（15%、3.5 km/h）',7.2],['快走（約 5.6 km/h）',4.3,1],['一般步行',3.5,1],['騎自行車（休閒 <16 km/h）',4.0],['騎自行車（中等 16–19 km/h）',6.8],['游泳（一般）',5.8],['重量訓練（8–15 下、多組）',3.5],['重量訓練（高強度）',6.0],['羽球（一般）',5.5],['籃球（一般）',6.5],['瑜珈（哈達）',2.5],['其他（自填 METs）',3.5]];
 let D;
 function load(){try{D=JSON.parse(localStorage.getItem(KEY))}catch(e){D=null}
  D=D||{};D.settings=Object.assign({},S0,D.settings||{});D.workouts=D.workouts||[];D.meals=D.meals||[];D.weights=D.weights||[];D.water=D.water||{};D.types=D.types||[];D.setup=D.setup||false}
-function save(sync=true){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){toast('儲存空間不足，請先匯出備份（頭像圖可能太大）')}if(sync)autoSync()}
+function save(sync=true){if(sync)D.updatedAt=Date.now();try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){toast('儲存空間不足，請先匯出備份（頭像圖可能太大）')}if(sync)autoSync()}
 let syncT,syncSt='';
-function setSt(t){syncSt=t;const e=document.getElementById('syncSt');if(e)e.textContent=t}
+function setSt(t){syncSt=t;['syncSt','syncHd'].forEach(i=>{const e=document.getElementById(i);if(e)e.textContent=t})}
 function autoSync(){if(!D.settings.url)return;clearTimeout(syncT);setSt('☁ 等待同步…');syncT=setTimeout(pushCloud,1500)}
 async function pushCloud(){if(!D.settings.url)return false;
  if(!navigator.onLine){setSt('☁ 目前離線，尚未同步；上線後再做一次任何修改，或按「上傳」');return false}
@@ -137,9 +136,9 @@ function calHtml(){const [Y,M]=calM.split('-').map(Number),first=calM+'-01',off=
  return h+'</div>'}
 /* ---- 主畫面 ---- */
 function render(){const s=S(),t=today(),f=dayFood(t),ws=wkStart(t),wk=Math.round(weekTotal(ws)),[k0,k1]=kcalRange();
- const av=AV?`<img class="av" src="${AV}" alt="${esc(s.npc)}">`:npcSvg;
- let h=`<div class="hd"><h1 style="margin:0 0 6px;font-size:22px">${esc(s.guild)}・修行場與食堂</h1><div class="scene">${av}<div class="bub"><b class="px">${esc(s.npc)}</b><div id="bubTxt">${esc(greet())}</div><div class="small">本週 ${wk} METs-分鐘｜今天 豆魚蛋肉 ${f.p}・全穀 ${f.g}・蔬菜 ${f.v}・油脂 ${f.f} 份｜水 ${f.w}/${s.bt} 瓶</div></div></div><div class="counter"></div>
- <div class="row" style="margin-top:8px"><button onclick="wDlg()">${IC_DB} 記錄運動</button><button onclick="mDlg()">${IC_FK} 記錄這一餐</button><button onclick="water(1)">${icBottle('h1')} 喝水 +1 瓶</button></div></div>`;
+ const asrc=AVG||AV,av=asrc?`<img class="av" src="${asrc}" alt="${esc(s.npc)}" onerror="if(AVG){AVG='';render()}">`:npcSvg;
+ let h=`<div class="hd"><h1 style="margin:0 0 6px;font-size:22px">${esc(s.guild)}，公會</h1><div class="scene">${av}<div class="bub"><b class="px">${esc(s.npc)}</b><div id="bubTxt">${esc(greet())}</div><div class="small">本週 ${wk} METs-分鐘｜今天 豆魚蛋肉 ${f.p}・全穀 ${f.g}・蔬菜 ${f.v}・油脂 ${f.f} 份｜水 ${f.w}/${s.bt} 瓶</div></div></div><div class="counter"></div>
+ <div class="row" style="margin-top:8px"><button onclick="wDlg()">${IC_DB} 記錄運動</button><button onclick="mDlg()">${IC_FK} 記錄這一餐</button><button onclick="water(1)">${icBottle('h1')} 喝水 +1 瓶</button></div><div class="small" id="syncHd" style="color:#e8d29b;margin-top:6px">${esc(syncSt)}</div></div>`;
  // 運動
  h+=`<section><h2>修行場・運動紀錄</h2><div class="board px">${wk}<span style="font-size:14px"> METs-分鐘／本週</span></div><h3>本週</h3><div class="grid7">`;
  for(let i=0;i<7;i++){const d=addD(ws,i),L=D.workouts.filter(w=>w.d===d);h+=`<div class="cell ${L.length?'':'rest'}"><b>${'一二三四五六日'[i]} ${d.slice(8)}</b>${L.length?L.map(w=>esc(w.name||w.type).slice(0,6)+' '+Math.round(mv(w))).join('<br>'):'休息日'}</div>`}
@@ -159,8 +158,8 @@ function render(){const s=S(),t=today(),f=dayFood(t),ws=wkStart(t),wk=Math.round
  h+=[...D.meals].sort((a,b)=>a.d<b.d?1:-1).slice(0,12).map(m=>`<div class="rec"><span>${m.d.slice(5)} ${m.meal} ${m.p}/${m.g}/${m.v}/${m.f} ${esc(m.text||'')}</span><span><button class="sm g" onclick="mDlg('${m.id}')">改</button> <button class="sm g" onclick="delM('${m.id}')">刪</button></span></div>`).join('')||'<p class="small">還沒有餐點紀錄。</p>';
  h+='</section>';
  // 設定
- h+=`<section><h2>設定與備份</h2><div class="row"><button onclick="setDlg()">⚙ 修改設定</button><button onclick="expo()">⬇ 匯出備份</button><button onclick="$('#imp').click()">⬆ 匯入備份</button><input id="imp" type="file" accept=".json" hidden onchange="impo(this)"></div><div class="row" style="margin-top:8px"><button class="g" onclick="up()">☁ 上傳到 Google 試算表</button><button class="g" onclick="down()">☁ 從雲端下載</button></div><p class="small" id="syncSt">${syncSt||'☁ 新增、修改、刪除資料後會自動同步到雲端。'}</p><p class="small">本工具為自我紀錄，不能取代醫師或營養師的建議；若有身體不適請諮詢專業人員。</p></section>`;
- $('#app').innerHTML=h}
+ h+=`<section><h2>設定與備份</h2><div class="row"><button onclick="setDlg()">⚙ 修改設定</button><button onclick="expo()">⬇ 匯出備份</button><button onclick="$('#imp').click()">⬆ 匯入備份</button><input id="imp" type="file" accept=".json" hidden onchange="impo(this)"></div><div class="row" style="margin-top:8px"><button class="g" onclick="up()">☁ 上傳到 Google 試算表</button><button class="g" onclick="down()">☁ 從雲端下載</button></div><p class="small" id="syncSt">${syncSt||(S().url?'☁ 新增、修改、刪除資料後會自動同步到雲端。':'☁ 尚未設定同步網址，請在「修改設定」貼上你的 Apps Script 網址。')}</p><p class="small">本工具為自我紀錄，不能取代醫師或營養師的建議；若有身體不適請諮詢專業人員。</p></section>`;
+ $('#app').innerHTML=h;document.title=s.guild+'，公會'}
 function mo(n){const [y,m]=calM.split('-').map(Number),d=new Date(y,m-1+n,1);calM=d.getFullYear()+'-'+pad(d.getMonth()+1);render()}
 /* ---- 對話框 ---- */
 const open=h=>{$('#dlg').innerHTML=h;$('#dlg').showModal()},closeDlg=()=>$('#dlg').close();
@@ -190,26 +189,68 @@ function saveM(id){const t=val('m_t'),rec={id:id||'m'+Date.now(),d:val('m_d'),me
 function delM(id){if(confirm('確定刪除這筆餐點紀錄？')){D.meals=D.meals.filter(x=>x.id!==id);save();render()}}
 function wtDlg(){open(`<h2>記錄體重</h2><div class="row"><div><label>日期</label><input id="t_d" type="date" value="${today()}"></div><div><label>體重（公斤）</label><input id="t_k" type="number" step="0.1"></div></div><div class="row" style="margin-top:8px"><button onclick="saveWt()">儲存</button><button class="g" onclick="closeDlg()">取消</button></div>`)}
 function saveWt(){const k=num(val('t_k'));if(!(k>0))return;D.weights=D.weights.filter(x=>x.d!==val('t_d'));D.weights.push({d:val('t_d'),kg:k});save();closeDlg();render();say('x')}
-const FLD=[['guild','公會名稱'],['npc','接待員名字'],['persona','接待員個性'],['look','接待員外表（文字描述）'],['me','我的冒險者名字'],['age','年齡'],['sex','性別（男／女）'],['h','身高（公分）'],['w','體重（公斤）'],['rhr','安靜心率'],['vo2','VO₂max（ml/kg/min）'],['mhr','最大心率（空白＝208−0.7×年齡）'],['p0','豆魚蛋肉 最少'],['p1','豆魚蛋肉 最多'],['g0','全穀雜糧 最少'],['g1','全穀雜糧 最多'],['v0','蔬菜 最少'],['v1','蔬菜 最多'],['f0','油脂堅果 最少'],['f1','油脂堅果 最多'],['k0','熱量最少（空白＝基礎代謝）'],['k1','熱量最多（空白＝TDEE）'],['act','活動係數（TDEE 用，預設 1.375）'],['kp','每份熱量：豆魚蛋肉（大卡）'],['kg','每份熱量：全穀雜糧（大卡）'],['kv','每份熱量：蔬菜（大卡）'],['kf','每份熱量：油脂堅果（大卡）'],['cc','一瓶水 cc'],['bt','每天目標瓶數'],['wday','量體重習慣日（0日 1一…6六）'],['url','Google 試算表同步網址']];
-function setDlg(){open(`<h2>設定</h2><p class="small">年齡、性別、身高、體重都可以先空白。公式只在畫面即時換算，存檔一律存原始輸入。</p><div class="row">${FLD.map(f=>`<div style="flex-basis:46%"><label>${f[1]}</label><input id="s_${f[0]}" value="${esc(S()[f[0]])}"></div>`).join('')}</div><div class="row" style="margin-top:8px"><div><label>接待員圖片／GIF（上傳）</label><input type="file" accept="image/*" onchange="avUp(this)"><div class="small">圖片存在這個瀏覽器的 IndexedDB，GIF 會保留動畫（上限 20 MB）。會包含在「匯出備份」裡，但不會同步到雲端試算表。</div></div><button class="g" onclick="setAvatar('');closeDlg()">改回像素接待員</button></div><div class="row" style="margin-top:8px"><button onclick="saveSet()">儲存</button><button class="g" onclick="closeDlg()">取消</button></div>`)}
-function saveSet(){FLD.forEach(f=>{let v=val('s_'+f[0]);if(!['guild','npc','persona','look','me','sex','url'].includes(f[0]))v=v===''?'':num(v);if(v===''||!isNaN(v)||typeof v==='string')S()[f[0]]=v});['cc','bt'].forEach(k=>{if(!(S()[k]>0))S()[k]=S0[k]});save();closeDlg();render()}
-let AV='';
+const FLD=[['guild','公會名稱'],['npc','接待員名字'],['persona','接待員個性'],['look','接待員外表（文字描述）'],['me','我的冒險者名字'],['age','年齡'],['sex','性別（男／女）'],['h','身高（公分）'],['w','體重（公斤）'],['rhr','安靜心率'],['vo2','VO₂max（ml/kg/min）'],['mhr','最大心率（空白＝208−0.7×年齡）'],['p0','豆魚蛋肉 最少'],['p1','豆魚蛋肉 最多'],['g0','全穀雜糧 最少'],['g1','全穀雜糧 最多'],['v0','蔬菜 最少'],['v1','蔬菜 最多'],['f0','油脂堅果 最少'],['f1','油脂堅果 最多'],['k0','熱量最少（空白＝基礎代謝）'],['k1','熱量最多（空白＝TDEE）'],['act','活動係數（TDEE 用，預設 1.375）'],['kp','每份熱量：豆魚蛋肉（大卡）'],['kg','每份熱量：全穀雜糧（大卡）'],['kv','每份熱量：蔬菜（大卡）'],['kf','每份熱量：油脂堅果（大卡）'],['cc','一瓶水 cc'],['bt','每天目標瓶數'],['wday','量體重習慣日（0日 1一…6六）'],['url','Google 試算表同步網址'],['gh_owner','GitHub 帳號（頭像存放處；在 github.io 開啟時會自動帶入）'],['gh_repo','GitHub 倉庫名稱'],['gh_branch','GitHub 分支（預設 main）']];
+function setDlg(){open(`<h2>設定</h2><p class="small">年齡、性別、身高、體重都可以先空白。公式只在畫面即時換算，存檔一律存原始輸入。</p><div class="row">${FLD.map(f=>`<div style="flex-basis:46%"><label>${f[1]}</label><input id="s_${f[0]}" value="${esc(S()[f[0]])}"></div>`).join('')}</div><div class="row" style="margin-top:8px"><div><label>GitHub 存取權杖（只存在這台裝置，不會同步、不會匯出）</label><input id="s_ghtok" type="password" autocomplete="off" value="${esc(getTok())}"><div class="small">建議用 fine-grained token，只授權這一個倉庫的 Contents 讀寫，並設定到期日。填好 GitHub 帳號、倉庫與權杖後，上傳的頭像會放到你的倉庫，所有裝置共用。</div></div></div><div class="row" style="margin-top:8px"><div><label>接待員圖片／GIF（上傳）</label><input type="file" accept="image/*" onchange="avUp(this)"><div class="small">GIF 會保留動畫（上限 20 MB）。圖片一定會存在這台裝置並包含在「匯出備份」；若填了 GitHub 資訊，也會上傳到你的倉庫（公開倉庫的圖片任何人都看得到）。</div></div><button class="g" onclick="removeAvatar()">改回像素接待員</button></div><div class="row" style="margin-top:8px"><button onclick="saveSet()">儲存</button><button class="g" onclick="closeDlg()">取消</button></div>`)}
+function saveSet(){FLD.forEach(f=>{let v=val('s_'+f[0]);if(!['guild','npc','persona','look','me','sex','url','gh_owner','gh_repo','gh_branch'].includes(f[0]))v=v===''?'':num(v);if(v===''||!isNaN(v)||typeof v==='string')S()[f[0]]=v});['cc','bt'].forEach(k=>{if(!(S()[k]>0))S()[k]=S0[k]});try{localStorage.setItem(TOK,val('s_ghtok').trim())}catch(e){}save();closeDlg();render();loadRemoteAvatar()}
+let AV='',AVG='';
 function idb(){return new Promise((ok,no)=>{try{const r=indexedDB.open('guildTrainingCanteenAv',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)}catch(e){no(e)}})}
 async function avGet(){try{const db=await idb();return await new Promise(ok=>{const q=db.transaction('kv').objectStore('kv').get('avatar');q.onsuccess=()=>ok(q.result||'');q.onerror=()=>ok('')})}catch(e){return ''}}
 async function avSet(v){try{const db=await idb();return await new Promise(ok=>{const tx=db.transaction('kv','readwrite');if(v)tx.objectStore('kv').put(v,'avatar');else tx.objectStore('kv').delete('avatar');tx.oncomplete=()=>ok(true);tx.onerror=()=>ok(false);tx.onabort=()=>ok(false)})}catch(e){return false}}
 async function setAvatar(v){AV=v||'';const ok=await avSet(AV);if(!ok)toast('頭像無法存入瀏覽器（可能是無痕模式或空間不足），本次開啟期間仍可使用；請用匯出備份保存');render()}
-async function initAvatar(){AV=await avGet();const old=S().avatar;if(old){if(!AV){AV=old;await avSet(AV)}S().avatar='';save(false)}render()}
+async function initAvatar(){AV=await avGet();const old=S().avatar;if(old){if(!AV){AV=old;await avSet(AV)}S().avatar='';save(false)}render();await loadRemoteAvatar()}
+const TOK='guildGhToken',EXTS=['gif','png','jpg','webp'];
+function getTok(){try{return localStorage.getItem(TOK)||''}catch(e){return ''}}
+function ghCfg(){let o=S().gh_owner,r=S().gh_repo;
+ if(!o&&/\.github\.io$/.test(location.hostname)){o=location.hostname.split('.')[0];const seg=location.pathname.split('/')[1];r=r||(seg&&!/\./.test(seg)?seg:o+'.github.io')}
+ return{o,r,b:S().gh_branch||'main',t:getTok()}}
+const ghBase=c=>'https://'+c.o+'.github.io/'+(c.r===c.o+'.github.io'?'':c.r+'/');
+function ghApi(c,path,m,body,q){return fetch('https://api.github.com/repos/'+c.o+'/'+c.r+'/contents/'+path+(q?'?ref='+encodeURIComponent(c.b):''),{method:m||'GET',headers:{'Authorization':'Bearer '+c.t,'Accept':'application/vnd.github+json'},body:body?JSON.stringify(body):undefined})}
+async function ghPutAvatar(c,dataUrl){const m=/^data:image\/(\w+);base64,(.*)$/.exec(dataUrl);if(!m)throw new Error('圖片格式不支援');
+ const ext=m[1]==='jpeg'?'jpg':m[1],path='avatar.'+ext;let sha;
+ const g=await ghApi(c,path,'GET',null,1);if(g.ok)sha=(await g.json()).sha;else if(g.status!==404)throw new Error('讀取失敗（'+g.status+'），請檢查帳號、倉庫與權杖');
+ const pr=await ghApi(c,path,'PUT',{message:'更新接待員頭像',content:m[2],branch:c.b,sha});if(!pr.ok)throw new Error('上傳失敗（'+pr.status+'），請確認權杖有這個倉庫的 Contents 讀寫權限');
+ for(const e of EXTS){if(e===ext)continue;const o=await ghApi(c,'avatar.'+e,'GET',null,1);if(o.ok){const j=await o.json();await ghApi(c,'avatar.'+e,'DELETE',{message:'移除舊頭像',sha:j.sha,branch:c.b})}}
+ return ext}
+async function ghDelAvatar(c){for(const e of EXTS){const o=await ghApi(c,'avatar.'+e,'GET',null,1);if(o.ok){const j=await o.json();const d=await ghApi(c,'avatar.'+e,'DELETE',{message:'移除接待員頭像',sha:j.sha,branch:c.b});if(!d.ok)throw new Error('刪除失敗（'+d.status+'）')}}}
+async function pickAvatar(v){await setAvatar(v);const c=ghCfg();
+ if(!(c.o&&c.r&&c.t)){toast('已存在這台裝置。要讓其他裝置共用，請在設定填 GitHub 帳號、倉庫與權杖。');return}
+ try{toast('正在上傳頭像到 GitHub…');const ext=await ghPutAvatar(c,v);Object.assign(S(),{gh_owner:c.o,gh_repo:c.r,gh_branch:c.b,avatarExt:ext,avatarV:Date.now()});AVG='';save();render();toast('已上傳到 GitHub；約 1～2 分鐘後，其他裝置重新整理就會看到。')}
+ catch(e){toast('GitHub 上傳失敗：'+(e&&e.message||'請檢查帳號、倉庫與權杖')+'（頭像仍已存在這台裝置）')}}
+async function removeAvatar(){await setAvatar('');const c=ghCfg();let msg='';
+ if(c.o&&c.r&&c.t){try{await ghDelAvatar(c)}catch(e){msg='GitHub 上的頭像刪除失敗：'+e.message}}else if(c.o&&c.r)msg='沒有填權杖，GitHub 倉庫裡的頭像檔沒有刪除，但已不會再顯示。';
+ S().avatarExt='';S().avatarV=Date.now();AVG='';save();closeDlg();render();if(msg)toast(msg)}
+async function loadRemoteAvatar(){const c=ghCfg();AVG='';if(!c.o||!c.r||S().avatarExt===''){render();return}
+ const base=ghBase(c),v=S().avatarV||0,ex=[S().avatarExt].concat(EXTS).filter((e,i,a)=>e&&a.indexOf(e)===i);
+ for(const e of ex){const u=base+'avatar.'+e+'?v='+v;if(await new Promise(r=>{const im=new Image();im.onload=()=>r(true);im.onerror=()=>r(false);im.src=u})){AVG=u;break}}
+ render()}
 function avUp(el){const f=el.files[0];if(!f)return;if(f.size>20e6){toast('圖檔超過 20 MB，請先縮小再上傳');return}
- const rd=new FileReader();rd.onload=()=>{if(f.type==='image/gif'){setAvatar(rd.result);return}
-  const im=new Image();im.onload=()=>{const c=document.createElement('canvas'),k=Math.min(1,600/Math.max(im.width,im.height));c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);setAvatar(c.toDataURL(f.type==='image/png'?'image/png':'image/jpeg',.9))};im.onerror=()=>toast('無法讀取這個圖檔');im.src=rd.result};
+ const rd=new FileReader();rd.onload=()=>{if(f.type==='image/gif'){pickAvatar(rd.result);return}
+  const im=new Image();im.onload=()=>{const c=document.createElement('canvas'),k=Math.min(1,600/Math.max(im.width,im.height));c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);pickAvatar(c.toDataURL(f.type==='image/png'?'image/png':'image/jpeg',.9))};im.onerror=()=>toast('無法讀取這個圖檔');im.src=rd.result};
  rd.readAsDataURL(f)}
 /* ---- 備份與同步 ---- */
-function expo(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(Object.assign({},D,{avatarData:AV}))],{type:'application/json'}));a.download='修行場與食堂_'+today()+'.json';a.click()}
+function expo(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(Object.assign({},D,{avatarData:AV}))],{type:'application/json'}));a.download='來都來了，公會_'+today()+'.json';a.click()}
 function impo(el){const f=el.files[0];if(!f)return;const rd=new FileReader();rd.onload=async()=>{try{const x=JSON.parse(rd.result);if(!x||typeof x!=='object')throw 0;if(!confirm('匯入會覆蓋目前所有資料，確定嗎？（建議先匯出備份）'))return;
  const av=x.avatarData||(x.settings&&x.settings.avatar)||'';delete x.avatarData;if(x.settings)x.settings.avatar='';D=x;save();load();if(av)await setAvatar(av);else render();toast('匯入完成'+(av?'（含頭像）':''))}catch(e){toast('檔案格式不正確，未做任何變更')}};rd.readAsText(f);el.value=''}
+function applyCloud(d){d.settings=Object.assign({},d.settings,{avatar:'',url:S().url});D=d;save(false);load();render();toast('已從雲端載入');loadRemoteAvatar()}
+const fmtT=t=>t?new Date(t).toLocaleString('zh-TW',{hour12:false}):'無時間記錄';
+const sigD=o=>JSON.stringify([o.workouts||[],o.meals||[],o.weights||[],o.water||{},o.types||[],Object.assign({},o.settings,{avatar:'',url:''})]);
+let lastChk=0,chkBusy=false,skipSig='',cloudD=null;
+async function keepLocal(){closeDlg();D.updatedAt=Date.now();save(false);await pushCloud()}
+async function checkCloud(force){if(!S().url||chkBusy||!navigator.onLine)return;if(!force&&Date.now()-lastChk<30000)return;
+ if(document.getElementById('dlg').open)return;
+ chkBusy=true;lastChk=Date.now();
+ try{const r=await fetch(S().url,{cache:'no-store'}),x=await r.json(),d=x&&x.data?x.data:x;
+  if(!d||!d.settings){setSt('☁ 雲端目前沒有備份');return}
+  const ct=d.updatedAt||0,lt=D.updatedAt||0;
+  if(sigD(d)===sigD(D)){setSt('☁ 已與雲端比對：內容相同（'+new Date().toLocaleTimeString('zh-TW',{hour12:false})+'）');return}
+  if(ct>0&&ct<lt){setSt('☁ 這台資料較新，正在上傳…');await pushCloud();return}
+  if(sigD(d)===skipSig){setSt('☁ 雲端與這台資料不同（你選擇稍後處理）');return}
+  cloudD=d;skipSig=sigD(d);setSt('☁ 雲端與這台資料不同，等待你選擇');
+  open(`<h2>☁ 雲端與這台裝置的資料不同</h2><p>${ct>lt?'雲端的資料比這台新。':'雲端的資料沒有可比較的時間記錄（可能是舊版上傳的），無法判斷哪邊較新，請你選擇。'}</p><p class="small">雲端：${fmtT(ct)}<br>這台：${fmtT(lt)}</p><div class="row"><button onclick="applyCloud(cloudD);closeDlg()">載入雲端資料</button><button class="g" onclick="keepLocal()">保留這台並上傳</button><button class="g" onclick="closeDlg()">稍後再說</button></div>`)}
+ catch(e){setSt('☁ 無法檢查雲端：'+(e&&e.message?e.message:'網路或網址問題'))}finally{chkBusy=false}}
 async function up(){if(!S().url)return toast('請先在設定填入同步網址');if(!confirm('上傳會覆蓋雲端上的備份，確定嗎？'))return;clearTimeout(syncT);if(await pushCloud())toast('已送出上傳。請到試算表確認；若沒有資料，需確認 Apps Script 的 doPost 有處理。')}
 async function down(){if(!S().url)return toast('請先在設定填入同步網址');
- try{const r=await fetch(S().url),x=await r.json(),d=x&&x.data?x.data:x;if(!d||!d.settings)throw 0;if(!confirm('下載會覆蓋目前本機資料，確定嗎？'))return;d.settings=Object.assign({},d.settings,{avatar:''});D=d;save(false);load();render();toast('已從雲端載入')}catch(e){toast('下載失敗：雲端沒有可用的備份，或 Apps Script 回傳格式不符')}}
+ try{const r=await fetch(S().url),x=await r.json(),d=x&&x.data?x.data:x;if(!d||!d.settings)throw 0;if(!confirm('下載會覆蓋目前本機資料，確定嗎？'))return;applyCloud(d)}catch(e){toast('下載失敗：雲端沒有可用的備份，或 Apps Script 回傳格式不符')}}
 
 /* ---- 圖片辨識（Tesseract.js，在瀏覽器內執行，不需金鑰） ---- */
 let tessP;
@@ -248,5 +289,5 @@ async function ocrImg(el){const f=el.files[0];if(!f)return;const st=document.get
  catch(e){st.textContent='辨識失敗：請確認網路連線，並用下載的 .html 檔開啟；也可以手動填寫。'}}
 render();if(!D.setup){D.setup=true;save(false);setDlg()}
 $('#fabm').innerHTML=`<button onclick="wDlg()">${IC_DB} 記錄運動</button><button onclick="mDlg()">${IC_FK} 記錄這一餐</button><button onclick="water(1)">${icBottle('f1')} 喝水 +1</button>`;
-initAvatar();
+initAvatar();checkCloud(true);const chk=()=>{if(document.visibilityState==='visible')checkCloud()};document.addEventListener('visibilitychange',chk);window.addEventListener('focus',chk);window.addEventListener('online',chk);setInterval(chk,60000);
 </script></body></html>
