@@ -208,10 +208,17 @@ function ghCfg(){let o=S().gh_owner,r=S().gh_repo;
  return{o,r,b:S().gh_branch||'main',t:getTok()}}
 const ghBase=c=>'https://'+c.o+'.github.io/'+(c.r===c.o+'.github.io'?'':c.r+'/');
 function ghApi(c,path,m,body,q){return fetch('https://api.github.com/repos/'+c.o+'/'+c.r+'/contents/'+path+(q?'?ref='+encodeURIComponent(c.b):''),{method:m||'GET',headers:{'Authorization':'Bearer '+c.t,'Accept':'application/vnd.github+json'},body:body?JSON.stringify(body):undefined})}
+async function ghMsg(r){try{return (await r.json()).message||''}catch(e){return ''}}
 async function ghPutAvatar(c,dataUrl){const m=/^data:image\/(\w+);base64,(.*)$/.exec(dataUrl);if(!m)throw new Error('圖片格式不支援');
+ const rr=await fetch('https://api.github.com/repos/'+c.o+'/'+c.r,{headers:{'Authorization':'Bearer '+c.t,'Accept':'application/vnd.github+json'}});
+ if(rr.status===401)throw new Error('權杖無效或已過期（401）');
+ if(rr.status===404)throw new Error('找不到倉庫 '+c.o+'/'+c.r+'：請確認帳號與倉庫名稱沒打錯，且權杖有授權這個倉庫（404）');
+ if(!rr.ok)throw new Error('檢查倉庫失敗（'+rr.status+'）：'+(await ghMsg(rr)));
+ const rj=await rr.json();if(rj.permissions&&rj.permissions.push===false)throw new Error('權杖只有讀取權限，請改成這個倉庫的 Contents「Read and write」');
+ if((!S().gh_branch||S().gh_branch==='main')&&rj.default_branch)c.b=rj.default_branch;
  const ext=m[1]==='jpeg'?'jpg':m[1],path='avatar.'+ext;let sha;
- const g=await ghApi(c,path,'GET',null,1);if(g.ok)sha=(await g.json()).sha;else if(g.status!==404)throw new Error('讀取失敗（'+g.status+'），請檢查帳號、倉庫與權杖');
- const pr=await ghApi(c,path,'PUT',{message:'更新接待員頭像',content:m[2],branch:c.b,sha});if(!pr.ok)throw new Error('上傳失敗（'+pr.status+'），請確認權杖有這個倉庫的 Contents 讀寫權限');
+ const g=await ghApi(c,path,'GET',null,1);if(g.ok)sha=(await g.json()).sha;else if(g.status!==404)throw new Error('讀取失敗（'+g.status+'）：'+(await ghMsg(g)));
+ const pr=await ghApi(c,path,'PUT',{message:'更新接待員頭像',content:m[2],branch:c.b,sha});if(!pr.ok)throw new Error('上傳失敗（'+pr.status+'）：'+(await ghMsg(pr))+'。請確認權杖有這個倉庫的 Contents 讀寫權限，且分支「'+c.b+'」存在');
  for(const e of EXTS){if(e===ext)continue;const o=await ghApi(c,'avatar.'+e,'GET',null,1);if(o.ok){const j=await o.json();await ghApi(c,'avatar.'+e,'DELETE',{message:'移除舊頭像',sha:j.sha,branch:c.b})}}
  return ext}
 async function ghDelAvatar(c){for(const e of EXTS){const o=await ghApi(c,'avatar.'+e,'GET',null,1);if(o.ok){const j=await o.json();const d=await ghApi(c,'avatar.'+e,'DELETE',{message:'移除接待員頭像',sha:j.sha,branch:c.b});if(!d.ok)throw new Error('刪除失敗（'+d.status+'）')}}}
