@@ -280,25 +280,71 @@ function parseWorkout(raw){const t=raw.replace(/([\u3000-\u9fff])[ \t]+(?=[\u300
  if(m=t.match(/(?:活動|主動)[ \t]*(?:卡路里|熱量|大卡|消耗|能量)[^\d\n]{0,6}(\d{2,4})/)||t.match(/(\d{2,4})[ \t]*(?:大卡|千卡|kcal|cal\b)/i)||t.match(/(?:健身熱量|消耗|卡路里|熱量)[^\d\n]{0,8}(\d{2,4})/)){const v=+m[1];if(v>=10&&v<=5000)o.kcal=v}
  if(m=t.match(/(\d{2,3})[ \t]*[次欠]?[ \t]*[\/／][ \t]*分/)||t.match(/(\d{2,3})[ \t]*bpm/i)||t.match(/平均[ \t]*心(?:跳率|率|跳)[^\d\n]{0,8}(\d{2,3})/)||t.match(/(?:avg|average)[^\d\n]{0,12}(\d{2,3})/i)){const v=+m[1];if(v>=40&&v<=230)o.hr=v}
  return o}
-function prepImg(f){return new Promise(ok=>{const im=new Image(),u=URL.createObjectURL(f);
- im.onload=()=>{try{const k=Math.max(1,1600/im.width),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
-  const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(im,0,0,c.width,c.height);const d=x.getImageData(0,0,c.width,c.height),p=d.data;
+function prepImgs(f){return new Promise(ok=>{const im=new Image(),u=URL.createObjectURL(f);
+ im.onload=()=>{try{const k=Math.max(1,1600/im.width),w=Math.round(im.width*k),h=Math.round(im.height*k),c=document.createElement('canvas');c.width=w;c.height=h;
+  const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(im,0,0,w,h);const d=x.getImageData(0,0,w,h),p=d.data;
   let sum=0;for(let i=0;i<p.length;i+=16)sum+=(p[i]+p[i+1]+p[i+2])/3;const inv=sum/(p.length/16)<110;
-  for(let i=0;i<p.length;i+=4){let g=inv?255-Math.max(p[i],p[i+1],p[i+2]):.299*p[i]+.587*p[i+1]+.114*p[i+2];g=Math.max(0,Math.min(255,(g-110)*1.8+110));p[i]=p[i+1]=p[i+2]=g}
-  x.putImageData(d,0,0);URL.revokeObjectURL(u);ok(c)}catch(e){URL.revokeObjectURL(u);ok(f)}};
- im.onerror=()=>{URL.revokeObjectURL(u);ok(f)};im.src=u})}
+  let c2=null,x2=null,d2=null,q=null;if(inv){c2=document.createElement('canvas');c2.width=w;c2.height=h;x2=c2.getContext('2d');d2=x2.createImageData(w,h);q=d2.data}
+  for(let i=0;i<p.length;i+=4){const r=p[i],g1=p[i+1],b=p[i+2];let g=inv?255-Math.max(r,g1,b):.299*r+.587*g1+.114*b;g=Math.max(0,Math.min(255,(g-110)*1.8+110));
+   if(inv){let m=255-Math.min(r,g1,b);m=Math.max(0,Math.min(255,(m-60)*1.6+60));q[i]=q[i+1]=q[i+2]=m;q[i+3]=255}
+   p[i]=p[i+1]=p[i+2]=g}
+  x.putImageData(d,0,0);if(inv)x2.putImageData(d2,0,0);URL.revokeObjectURL(u);ok([c,c2])}catch(e){URL.revokeObjectURL(u);ok([f,null])}};
+ im.onerror=()=>{URL.revokeObjectURL(u);ok([f,null])};im.src=u})}
+/* 以文字位置（座標）解析：值通常在標籤正下方；白字另跑一次，專門讀數字 */
+function getWords(d){let a=[];
+ if(Array.isArray(d.words)&&d.words.length)a=d.words.map(w=>({t:w.text,x0:w.bbox.x0,y0:w.bbox.y0,x1:w.bbox.x1,y1:w.bbox.y1}));
+ else if(d.tsv)d.tsv.split('\n').forEach(l=>{const c=l.split('\t');if(c[0]==='5'&&c.length>=12&&c[11]&&c[11].trim())a.push({t:c[11],x0:+c[6],y0:+c[7],x1:+c[6]+ +c[8],y1:+c[7]+ +c[9]})});
+ return a.filter(w=>w.t&&String(w.t).trim()).map(w=>{w.t=String(w.t).trim();w.h=w.y1-w.y0;w.cx=(w.x0+w.x1)/2;w.cy=(w.y0+w.y1)/2;return w})}
+const RDUR=/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/;
+const durMin=t=>{const m=RDUR.exec(t);return m?(m[3]!=null?+m[1]*60+ +m[2]+ +m[3]/60:+m[1]+ +m[2]/60):null};
+const intVal=t=>{const m=/^(\d{2,4})[^\d:'"．.,，]{0,4}$/.exec(t);return m?+m[1]:null};
+const okHR=v=>v!=null&&v>=40&&v<=230,okKC=v=>v!=null&&v>=10&&v<=5000;
+function phraseList(ws){const lines=[];
+ [...ws].sort((a,b)=>a.cy-b.cy||a.x0-b.x0).forEach(w=>{const l=lines.find(L=>Math.abs(L.cy-w.cy)<Math.max(w.h,L.h)*0.5);if(l)l.ws.push(w);else lines.push({cy:w.cy,h:w.h,ws:[w]})});
+ const out=[],fin=c=>Object.assign(c,{cx:(c.x0+c.x1)/2,cy:(c.y0+c.y1)/2,w:c.x1-c.x0,h:c.y1-c.y0});
+ lines.forEach(L=>{L.ws.sort((a,b)=>a.x0-b.x0);let cur=null;
+  L.ws.forEach(w=>{if(cur&&w.x0-cur.x1<=Math.max(w.h,cur.h)*1.5){cur.s+=w.t.replace(/\s+/g,'');cur.x1=Math.max(cur.x1,w.x1);cur.y0=Math.min(cur.y0,w.y0);cur.y1=Math.max(cur.y1,w.y1)}
+   else{if(cur)out.push(fin(cur));cur={s:w.t.replace(/\s+/g,''),x0:w.x0,x1:w.x1,y0:w.y0,y1:w.y1,h:w.h}}});if(cur)out.push(fin(cur))});
+ return out}
+function parseShot(pa,pb){
+ const all0=(pb?pb.words:[]).concat(pa.words),all=[];
+ all0.forEach(w=>{if(!all.some(v=>Math.abs(v.cx-w.cx)<Math.max(v.h,w.h)*0.8&&Math.abs(v.cy-w.cy)<Math.max(v.h,w.h)*0.6))all.push(w)});
+ const H=Math.max(1,...all0.map(w=>w.y1)),W=Math.max(1,...all0.map(w=>w.x1));
+ const base=parseWorkout((pb?pb.text+'\n':'')+pa.text),o={},src={};
+ ['type','name','date'].forEach(k=>{if(base[k]!=null)o[k]=base[k]});
+ const D=all.filter(w=>durMin(w.t)!=null&&w.cy>H*0.12).sort((a,b)=>b.h-a.h)[0];
+ const labs=phraseList(pa.words).concat(pb?phraseList(pb.words):[]);
+ const below=(lab,test)=>{let b=null;all.forEach(w=>{if(!test(w))return;const dy=w.cy-lab.cy;if(dy<=0||dy>Math.max(lab.h,40)*6)return;if(Math.abs(w.cx-lab.cx)>Math.max(lab.w*0.7,W*0.18))return;if(!b||dy<b.dy)b={w,dy}});return b&&b.w};
+ const byLab=(re,test)=>{for(const l of labs.filter(l=>re.test(l.s))){const w=below(l,test);if(w)return w}return null};
+ let w;
+ if(w=byLab(/持續時間|運動時間|活動時間|持續/,x=>durMin(x.t)!=null)){o.min=Math.round(durMin(w.t));o.raw=w.t;src.min='標籤定位'}
+ if(w=byLab(/心跳率|心率|跳率|心跳/,x=>okHR(intVal(x.t)))){o.hr=intVal(w.t);src.hr='標籤定位'}
+ if(w=byLab(/熱量|卡路里|大卡|消耗/,x=>okKC(intVal(x.t)))){o.kcal=intVal(w.t);src.kcal='標籤定位'}
+ if(o.min==null&&D){o.min=Math.round(durMin(D.t));o.raw=D.t;src.min='版面位置（最大的時間數字）'}
+ if((o.hr==null||o.kcal==null)&&D){
+  const big=all.filter(x=>intVal(x.t)!=null&&x.h>=D.h*0.6&&x.cy>D.cy+D.h*0.6).sort((a,b)=>a.cy-b.cy);
+  if(big.length){const r0=big[0].cy,row=big.filter(x=>Math.abs(x.cy-r0)<D.h*0.6).sort((a,b)=>a.cx-b.cx);
+   if(row.length>=2&&okHR(intVal(row[0].t))&&okKC(intVal(row[1].t))){
+    if(o.hr==null){o.hr=intVal(row[0].t);src.hr='版面位置（第二排左）'}
+    if(o.kcal==null){o.kcal=intVal(row[1].t);src.kcal='版面位置（第二排右）'}}}}
+ ['min','hr','kcal'].forEach(k=>{if(o[k]==null&&base[k]!=null){o[k]=base[k];src[k]='文字比對'}});
+ o.src=src;return o}
 async function ocrImg(el){const f=el.files[0];if(!f)return;const st=document.getElementById('ocrSt');
- try{st.textContent='載入辨識工具…（首次約需數十秒）';const T=await loadTess();
-  const r=await T.recognize(await prepImg(f),'chi_tra+eng',{logger:m=>{if(m.status)st.textContent='辨識中：'+m.status+(m.progress?' '+Math.round(m.progress*100)+'%':'')}});
-  const tx=r.data.text||'';document.getElementById('ocrTx').textContent=tx;const g=parseWorkout(tx),got=[],set=(id,v)=>{document.getElementById(id).value=v};
-  if(g.date){set('w_d',g.date);got.push('日期')}
-  if(g.type){set('w_t',g.type);wType();set('w_n',g.name);got.push('種類／名稱')}
-  if(g.min){set('w_m',g.min);got.push('時間')}
-  if(g.kcal){set('w_k',g.kcal);got.push('活動卡路里')}
-  if(g.hr){set('w_h',g.hr);got.push('平均心率')}
+ try{st.textContent='載入辨識工具…（首次約需數十秒）';const T=await loadTess(),cv=await prepImgs(f),n=cv[1]?2:1;let eng=false;
+  const run=async(c,k)=>{const opt={logger:m=>{if(m.status)st.textContent='辨識中（第 '+k+'/'+n+' 輪）：'+m.status+(m.progress?' '+Math.round(m.progress*100)+'%':'')}};let r;
+   try{r=await T.recognize(c,'chi_tra+eng',opt)}catch(e){eng=true;r=await T.recognize(c,'eng',opt)}return{text:r.data.text||'',words:getWords(r.data)}};
+  const pa=await run(cv[0],1),pb=cv[1]?await run(cv[1],2):null;
+  document.getElementById('ocrTx').textContent=(pb?'【白字】\n'+pb.text+'\n':'')+'【一般】\n'+pa.text;
+  const g=parseShot(pa,pb),got=[],set=(id,v)=>{document.getElementById(id).value=v};
+  if(g.date){set('w_d',g.date);got.push('日期 '+g.date)}
+  if(g.type){set('w_t',g.type);wType();set('w_n',g.name);got.push('種類／名稱 '+g.name)}
+  if(g.min){set('w_m',g.min);got.push('時間 '+g.raw+' → '+g.min+' 分（'+g.src.min+'）')}
+  if(g.kcal){set('w_k',g.kcal);got.push('活動卡路里 '+g.kcal+'（'+g.src.kcal+'）')}
+  if(g.hr){set('w_h',g.hr);got.push('平均心率 '+g.hr+'（'+g.src.hr+'）')}
   wLive();
-  st.textContent=got.length?'已帶入：'+got.join('、')+'。請對照截圖確認，沒辨識到的欄位請手動填，確認後再按儲存。':'沒有辨識到可用的欄位，請手動填寫（可展開下方看辨識到的文字）。'}
- catch(e){st.textContent='辨識失敗：請確認網路連線，並用下載的 .html 檔開啟；也可以手動填寫。'}}
+  const miss=[];if(!g.type)miss.push('種類／名稱');if(!g.min)miss.push('時間');if(!g.kcal)miss.push('活動卡路里');if(!g.hr)miss.push('平均心率');
+  st.textContent=(got.length?'已帶入：'+got.join('；')+'。':'')+(miss.length?'沒辨識到：'+miss.join('、')+'，請手動填寫。':'')+(eng?'（中文辨識模型載入失敗，只用數字位置辨識，種類與日期請手動確認。）':'')+' 請對照截圖確認後再儲存。'}
+ catch(e){st.textContent='辨識失敗：請確認網路連線，並用下載的 .html 檔或你的網站開啟；也可以手動填寫。'}}
 render();if(!D.setup){D.setup=true;save(false);setDlg()}
 $('#fabm').innerHTML=`<button onclick="wDlg()">${IC_DB} 記錄運動</button><button onclick="mDlg()">${IC_FK} 記錄這一餐</button><button onclick="water(1)">${icBottle('f1')} 喝水 +1</button>`;
 initAvatar();checkCloud(true);const chk=()=>{if(document.visibilityState==='visible')checkCloud()};document.addEventListener('visibilitychange',chk);window.addEventListener('focus',chk);window.addEventListener('online',chk);setInterval(chk,60000);
