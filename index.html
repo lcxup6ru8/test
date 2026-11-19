@@ -42,6 +42,7 @@ svg.av{width:auto;height:170px}
 dialog{border:3px solid var(--wood);background:var(--pa);border-radius:12px;width:min(94vw,520px);padding:12px;color:var(--ink)}
 dialog::backdrop{background:#000a}
 .res{background:#fff8e4;border:2px dashed var(--wood);border-radius:8px;padding:6px 8px;font-size:13px}
+.rec[role=button]:hover{background:#fff8e4}
 .small{font-size:12px;color:#6a553a}.rec{display:flex;justify-content:space-between;gap:6px;align-items:center;border-bottom:1px dashed var(--wood);padding:4px 0;font-size:13px}
 #fab{position:fixed;right:10px;bottom:12px;z-index:9;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 #fab .m{display:none;flex-direction:column;gap:6px}#fab.open .m,#fab:hover .m,#fab:focus-within .m{display:flex}
@@ -145,8 +146,8 @@ function render(){const s=S(),t=today(),f=dayFood(t),ws=wkStart(t),wk=Math.round
  // 運動
  h+=`<section><h2>修行場・運動紀錄</h2><div class="board px">${wk}<span style="font-size:14px"> METs-分鐘／本週</span></div><h3>本週</h3><div class="grid7">`;
  for(let i=0;i<7;i++){const d=addD(ws,i),L=D.workouts.filter(w=>w.d===d);h+=`<div class="cell ${L.length?'':'rest'}"><b>${'一二三四五六日'[i]} ${d.slice(8)}</b>${L.length?L.map(w=>esc(w.name||w.type).slice(0,6)+' '+Math.round(mv(w))).join('<br>'):'休息日'}</div>`}
- h+=`</div><h3>最近 8 週</h3>${weeklyChart()}<p class="small">600＝WHO 每週最低建議；1200＝WHO 額外健康效益；1500＝ACSM 建議的較高活動量（約每週 250 分鐘以上中等強度）。建議值是用標準 METs 估算，你的主要數值有經過個人化校正，比較時看大概就好。</p><h3>紀錄</h3>`;
- h+=[...D.workouts].sort((a,b)=>a.d<b.d?1:-1).slice(0,15).map(w=>`<div class="rec"><span>${w.d.slice(5)} ${esc(w.name||w.type)} ${w.min}分・${Math.round(mv(w))}</span><span><button class="sm g" onclick="wDlg('${w.id}')">改</button> <button class="sm g" onclick="delW('${w.id}')">刪</button></span></div>`).join('')||'<p class="small">還沒有運動紀錄。</p>';
+ h+=`</div><h3>最近 8 週</h3>${weeklyChart()}<p class="small">600＝WHO 每週最低建議；1200＝WHO 額外健康效益；1500＝ACSM 建議的較高活動量（約每週 250 分鐘以上中等強度）。建議值是用標準 METs 估算，你的主要數值有經過個人化校正，比較時看大概就好。</p><h3>紀錄 <span class="small">（點一筆可修改、複製或刪除）</span></h3>`;
+ h+=[...D.workouts].sort((a,b)=>a.d<b.d?1:-1).slice(0,15).map(w=>`<div class="rec" role="button" tabindex="0" style="cursor:pointer" onclick="wDlg('${w.id}')" onkeydown="if(event.key==='Enter')wDlg('${w.id}')"><span>${w.d.slice(5)} ${esc(w.name||w.type)} ${w.min}分・${Math.round(mv(w))}</span><span class="small">›</span></div>`).join('')||'<p class="small">還沒有運動紀錄。</p>';
  h+='</section>';
  // 食堂
  h+=`<section><h2>公會食堂・飲食紀錄</h2><h3>今天</h3>`;
@@ -157,23 +158,23 @@ function render(){const s=S(),t=today(),f=dayFood(t),ws=wkStart(t),wk=Math.round
  h+=`</div><p class="small">點水瓶記錄；再點同一瓶可切換整瓶／半瓶／清空。</p><h3>本週</h3><div class="grid7">`;
  for(let i=0;i<7;i++){const d=addD(ws,i),L=D.meals.filter(m=>m.d===d),x=dayFood(d);h+=`<div class="cell ${L.length?'':'rest'}"><b>${'一二三四五六日'[i]} ${d.slice(8)}</b>${L.map(m=>m.meal[0]+esc((m.text||'').slice(0,4))).join('<br>')||'—'}<br>${x.n?`${x.p}/${x.g}/${x.v}/${x.f}`:''}</div>`}
  h+=`</div><h3>食堂月曆 <button class="sm g" onclick="mo(-1)">‹</button> ${calM} <button class="sm g" onclick="mo(1)">›</button></h3>${calHtml()}<p class="small">⭐全達標　●四類在範圍內　💧水喝滿　✔有紀錄</p>
- <h3>體重（習慣日：週${'日一二三四五六'[s.wday]}）</h3><button onclick="wtDlg()">記錄體重</button>${weightChart()}<p class="small">只看趨勢，一兩天上下很正常。</p><h3>餐點紀錄</h3>`;
- h+=[...D.meals].sort((a,b)=>a.d<b.d?1:-1).slice(0,12).map(m=>`<div class="rec"><span>${m.d.slice(5)} ${m.meal} ${m.p}/${m.g}/${m.v}/${m.f} ${esc(m.text||'')}</span><span><button class="sm g" onclick="mDlg('${m.id}')">改</button> <button class="sm g" onclick="delM('${m.id}')">刪</button></span></div>`).join('')||'<p class="small">還沒有餐點紀錄。</p>';
+ <h3>體重（習慣日：週${'日一二三四五六'[s.wday]}）</h3><button onclick="wtDlg()">記錄體重</button>${weightChart()}<p class="small">只看趨勢，一兩天上下很正常。</p><h3>餐點紀錄 <span class="small">（點一筆可修改、複製或刪除）</span></h3>`;
+ h+=[...D.meals].sort((a,b)=>a.d<b.d?1:-1).slice(0,12).map(m=>`<div class="rec" role="button" tabindex="0" style="cursor:pointer" onclick="mDlg('${m.id}')" onkeydown="if(event.key==='Enter')mDlg('${m.id}')"><span>${m.d.slice(5)} ${m.meal} ${m.p}/${m.g}/${m.v}/${m.f} ${esc(m.text||'')}</span><span class="small">›</span></div>`).join('')||'<p class="small">還沒有餐點紀錄。</p>';
  h+='</section>';
  // 設定
  h+=`<section><h2>設定與備份</h2><div class="row"><button onclick="setDlg()">⚙ 修改設定</button><button onclick="expo()">⬇ 匯出備份</button><button onclick="$('#imp').click()">⬆ 匯入備份</button><input id="imp" type="file" accept=".json" hidden onchange="impo(this)"></div><div class="row" style="margin-top:8px"><button class="g" onclick="up()">☁ 上傳到 Google 試算表</button><button class="g" onclick="down()">☁ 從雲端下載</button></div><p class="small" id="syncSt">${syncSt||(S().url?'☁ 新增、修改、刪除資料後會自動同步到雲端。':'☁ 尚未設定同步網址，請在「修改設定」貼上你的 Apps Script 網址。')}</p><p class="small">本工具為自我紀錄，不能取代醫師或營養師的建議；若有身體不適請諮詢專業人員。</p></section>`;
  $('#app').innerHTML=h;document.title=s.guild+'，公會'}
 function mo(n){const [y,m]=calM.split('-').map(Number),d=new Date(y,m-1+n,1);calM=d.getFullYear()+'-'+pad(d.getMonth()+1);render()}
 /* ---- 對話框 ---- */
-const open=h=>{$('#dlg').innerHTML=h;$('#dlg').showModal()},closeDlg=()=>$('#dlg').close();
+const open=h=>{const d=$('#dlg');d.innerHTML=h;if(!d.open)d.showModal()},closeDlg=()=>$('#dlg').close();
 const val=id=>document.getElementById(id).value;
 function allTypes(){return TYPES.concat(D.types)}
-function wDlg(id){const w=D.workouts.find(x=>x.id===id)||{d:today(),type:TYPES[1][0],name:'',min:30,met:TYPES[1][1],kcal:'',hr:''};
- open(`<h2>${id?'修改':'記錄'}運動</h2><form onsubmit="return false"><div class="res" style="margin-bottom:8px"><label>📷 上傳運動截圖（自動辨識）</label><input type="file" accept="image/*" onchange="ocrImg(this)"><div id="ocrSt" class="small">辨識在你的瀏覽器內進行，圖片不會上傳；首次使用需連網載入辨識模型。辨識後請確認欄位，再按儲存。</div><details><summary class="small">看辨識到的文字</summary><pre id="ocrTx" style="white-space:pre-wrap;font-size:11px;margin:4px 0"></pre></details></div><div class="row"><div><label>日期</label><input id="w_d" type="date" value="${w.d}"></div><div><label>種類</label><select id="w_t" onchange="wType()">${allTypes().map(t=>`<option ${t[0]===w.type?'selected':''}>${esc(t[0])}</option>`).join('')}</select></div></div>
+function wDlg(id,cp){let w=D.workouts.find(x=>x.id===id)||{d:today(),type:TYPES[1][0],name:'',min:30,met:TYPES[1][1],kcal:'',hr:''};if(cp){w=Object.assign({},w,{d:today()});id=''}
+ open(`<h2>${cp?'複製為新的運動紀錄':id?'修改運動紀錄':'記錄運動'}</h2>${cp?'<p class="small">已帶入今天日期，其他欄位同原紀錄；確認後按「儲存」才會新增。</p>':''}<form onsubmit="return false"><div class="res" style="margin-bottom:8px"><label>📷 上傳運動截圖（自動辨識）</label><input type="file" accept="image/*" onchange="ocrImg(this)"><div id="ocrSt" class="small">辨識在你的瀏覽器內進行，圖片不會上傳；首次使用需連網載入辨識模型。辨識後請確認欄位，再按儲存。</div><details><summary class="small">看辨識到的文字</summary><pre id="ocrTx" style="white-space:pre-wrap;font-size:11px;margin:4px 0"></pre></details></div><div class="row"><div><label>日期</label><input id="w_d" type="date" value="${w.d}"></div><div><label>種類</label><select id="w_t" onchange="wType()">${allTypes().map(t=>`<option ${t[0]===w.type?'selected':''}>${esc(t[0])}</option>`).join('')}</select></div></div>
  <div id="w_walk" class="row" hidden><label><input type="radio" name="wk" value="3.5" onchange="wWalk()" checked> 平地</label><label><input type="radio" name="wk" value="7.2" onchange="wWalk()"> 坡走 15%・3.5 km/h</label></div>
  <div class="row"><div><label>名稱（可自訂）</label><input id="w_n" value="${esc(w.name)}"></div><div><label>時間（分鐘）</label><input id="w_m" type="number" min="1" value="${w.min}" oninput="wLive()"></div><div><label>METs</label><input id="w_e" type="number" step="0.1" value="${w.met}" oninput="wLive()"></div></div>
  <div class="row"><div><label>活動卡路里（可空）</label><input id="w_k" type="number" value="${w.kcal}" oninput="wLive()"></div><div><label>平均心率（可空）</label><input id="w_h" type="number" value="${w.hr}" oninput="wLive()"></div></div>
- <div id="w_r" class="res"></div><div class="row" style="margin-top:8px"><button onclick="saveW('${id||''}')">儲存</button><button class="g" onclick="closeDlg()">取消</button><button class="g" onclick="newType()">＋新增種類</button></div></form>`);wType(1);wLive()}
+ <div id="w_r" class="res"></div><div class="row" style="margin-top:8px"><button onclick="saveW('${id||''}')">${id?'更新':'儲存'}</button>${id?`<button class="g" onclick="wDlg('${id}',true)">複製</button><button class="g" onclick="delW('${id}')">刪除</button>`:''}<button class="g" onclick="closeDlg()">取消</button><button class="g" onclick="newType()">＋新增種類</button></div></form>`);wType(1);wLive()}
 function wType(keep){const t=val('w_t'),ty=allTypes().find(x=>x[0]===t);document.getElementById('w_walk').hidden=!ty[2];if(!keep){document.getElementById('w_e').value=ty[1];if(!val('w_n'))document.getElementById('w_n').placeholder=t}wLive()}
 function wWalk(){document.getElementById('w_e').value=document.querySelector('[name=wk]:checked').value;wLive()}
 function wRec(){return{type:val('w_t'),met:val('w_e'),min:val('w_m'),kcal:val('w_k'),hr:val('w_h')}}
@@ -181,15 +182,16 @@ function wLive(){const o=calc(wRec()),f=x=>x==null||isNaN(x)?'—':r1(x);documen
 function saveW(id){const r=wRec();if(!(num(r.min)>0))return toast('請填時間（分鐘）');const rec=Object.assign({id:id||'w'+Date.now(),d:val('w_d'),name:val('w_n')},r);
  if(id)D.workouts=D.workouts.map(x=>x.id===id?rec:x);else D.workouts.push(rec);save();closeDlg();render();say('w')}
 function newType(){const n=prompt('新種類名稱');if(!n)return;const m=num(prompt('METs 數值','4'));if(isNaN(m))return;D.types.push([n,m]);save();wDlg()}
-function delW(id){if(confirm('確定刪除這筆運動紀錄？')){D.workouts=D.workouts.filter(x=>x.id!==id);save();render()}}
-function mDlg(id){const m=D.meals.find(x=>x.id===id)||{d:today(),meal:'午餐',p:0,g:0,v:0,f:0,water:'',text:''};
- open(`<h2>${id?'修改':'記錄'}這一餐</h2><form onsubmit="return false"><div class="row"><div><label>日期</label><input id="m_d" type="date" value="${m.d}"></div><div><label>餐別</label><select id="m_m">${['早餐','午餐','晚餐','點心'].map(x=>`<option ${x===m.meal?'selected':''}>${x}</option>`).join('')}</select></div></div>
+function delW(id){const w=D.workouts.find(x=>x.id===id);if(!w)return;if(confirm('確定刪除這筆運動紀錄？\n'+w.d+' '+(w.name||w.type)+'，'+w.min+' 分鐘\n刪除後無法復原。')){D.workouts=D.workouts.filter(x=>x.id!==id);save();closeDlg();render()}}
+function mealNow(){const n=new Date(),t=n.getHours()*60+n.getMinutes(),A=[['早餐',480],['午餐',750],['晚餐',1110],['點心',930]];let b='點心',bd=1e9;A.forEach(a=>{let d=Math.abs(t-a[1]);d=Math.min(d,1440-d);if(d<bd){bd=d;b=a[0]}});return b}
+function mDlg(id,cp){let m=D.meals.find(x=>x.id===id)||{d:today(),meal:'午餐',p:0,g:0,v:0,f:0,water:'',text:''};if(cp){m=Object.assign({},m,{d:today(),meal:mealNow()});id=''}
+ open(`<h2>${cp?'複製為新的一餐':id?'修改這一餐':'記錄這一餐'}</h2>${cp?'<p class="small">已帶入今天日期與最接近的餐別，其他欄位同原紀錄；確認後按「儲存」才會新增。</p>':''}<form onsubmit="return false"><div class="row"><div><label>日期</label><input id="m_d" type="date" value="${m.d}"></div><div><label>餐別</label><select id="m_m">${['早餐','午餐','晚餐','點心'].map(x=>`<option ${x===m.meal?'selected':''}>${x}</option>`).join('')}</select></div></div>
  <div class="row">${CATS.map(c=>`<div><label>${c[1]}（份）</label><input id="m_${c[0]}" type="number" step="0.5" min="0" value="${m[c[0]]}"></div>`).join('')}</div>
  <div class="row"><div><label>這餐熱量（大卡，可空；空白則依份數估算）</label><input id="m_k" type="number" min="0" value="${m.kcal??''}"></div></div><div class="row"><div><label>這段時間喝水（瓶）</label><select id="m_w">${['','0.5','1','1.5','2','3'].map(x=>`<option value="${x}" ${String(m.water)===x?'selected':''}>${x||'不填'}</option>`).join('')}</select></div><div><label>吃了什麼</label><input id="m_t" value="${esc(m.text)}"></div></div>
- <div class="row" style="margin-top:8px"><button onclick="saveM('${id||''}')">儲存</button><button class="g" onclick="closeDlg()">取消</button></div></form>`)}
+ <div class="row" style="margin-top:8px"><button onclick="saveM('${id||''}')">${id?'更新':'儲存'}</button>${id?`<button class="g" onclick="mDlg('${id}',true)">複製</button><button class="g" onclick="delM('${id}')">刪除</button>`:''}<button class="g" onclick="closeDlg()">取消</button></div></form>`)}
 function saveM(id){const t=val('m_t'),rec={id:id||'m'+Date.now(),d:val('m_d'),meal:val('m_m'),water:val('m_w'),kcal:val('m_k'),text:t};CATS.forEach(c=>rec[c[0]]=num(val('m_'+c[0]))||0);
  if(id)D.meals=D.meals.map(x=>x.id===id?rec:x);else D.meals.push(rec);save();closeDlg();render();say('m');if(/痛|不舒服|頭暈|不適|噁心/.test(t))toast('備註提到身體不適，建議諮詢醫師或營養師。')}
-function delM(id){if(confirm('確定刪除這筆餐點紀錄？')){D.meals=D.meals.filter(x=>x.id!==id);save();render()}}
+function delM(id){const m=D.meals.find(x=>x.id===id);if(!m)return;if(confirm('確定刪除這筆餐點紀錄？\n'+m.d+' '+m.meal+(m.text?'：'+m.text:'')+'\n刪除後無法復原。')){D.meals=D.meals.filter(x=>x.id!==id);save();closeDlg();render()}}
 function wtDlg(){open(`<h2>記錄體重</h2><div class="row"><div><label>日期</label><input id="t_d" type="date" value="${today()}"></div><div><label>體重（公斤）</label><input id="t_k" type="number" step="0.1"></div></div><div class="row" style="margin-top:8px"><button onclick="saveWt()">儲存</button><button class="g" onclick="closeDlg()">取消</button></div>`)}
 function saveWt(){const k=num(val('t_k'));if(!(k>0))return;D.weights=D.weights.filter(x=>x.d!==val('t_d'));D.weights.push({d:val('t_d'),kg:k});save();closeDlg();render();say('x')}
 const FLD=[['guild','公會名稱'],['npc','接待員名字'],['persona','接待員個性'],['look','接待員外表（文字描述）'],['me','我的冒險者名字'],['age','年齡'],['sex','性別（男／女）'],['h','身高（公分）'],['w','體重（公斤）'],['rhr','安靜心率'],['vo2','VO₂max（ml/kg/min）'],['mhr','最大心率（空白＝208−0.7×年齡）'],['p0','豆魚蛋肉 最少'],['p1','豆魚蛋肉 最多'],['g0','全穀雜糧 最少'],['g1','全穀雜糧 最多'],['v0','蔬菜 最少'],['v1','蔬菜 最多'],['f0','油脂堅果 最少'],['f1','油脂堅果 最多'],['k0','熱量最少（空白＝基礎代謝）'],['k1','熱量最多（空白＝TDEE）'],['act','活動係數（TDEE 用，預設 1.375）'],['kp','每份熱量：豆魚蛋肉（大卡）'],['kg','每份熱量：全穀雜糧（大卡）'],['kv','每份熱量：蔬菜（大卡）'],['kf','每份熱量：油脂堅果（大卡）'],['cc','一瓶水 cc'],['bt','每天目標瓶數'],['wday','量體重習慣日（0日 1一…6六）'],['url','Google 試算表同步網址'],['gh_owner','GitHub 帳號（頭像存放處；在 github.io 開啟時會自動帶入）'],['gh_repo','GitHub 倉庫名稱'],['gh_branch','GitHub 分支（預設 main）']];
